@@ -29,8 +29,7 @@
 localhost...
 
 
-
-![mapa](C:\Diego\DataProject1\mapa.png)
+![mapa](https://user-images.githubusercontent.com/84716641/152029011-5b956522-c2ad-4856-8f7c-b0a51244f84c.png)
 
 
 
