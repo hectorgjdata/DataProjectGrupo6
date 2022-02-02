@@ -7,7 +7,7 @@ except ImportError:
 #from geopy import distance
 from faker import Faker
 from geopy import distance
-import time
+#import time
 import random
 from flask import Flask, render_template, request
 
@@ -17,37 +17,41 @@ from tornado.ioloop import IOLoop
 from bokeh.application import Application
 from bokeh.application.handlers import FunctionHandler
 from bokeh.embed import server_document
-from bokeh.layouts import column
-from bokeh.models import ColumnDataSource, Slider
+#from bokeh.layouts import column
+from bokeh.models import ColumnDataSource#, Slider
 from bokeh.plotting import figure
 from bokeh.server.server import BaseServer
 from bokeh.server.tornado import BokehTornado
 from bokeh.server.util import bind_sockets
 from bokeh.themes import Theme
-from bokeh.sampledata.sea_surface_temperature import sea_surface_temperature
+#from bokeh.sampledata.sea_surface_temperature import sea_surface_temperature
 
 
-import requests
-import json
+#import requests
+#import json
 import pandas as pd
-from bokeh.models import HoverTool,LabelSet,ColumnDataSource
+from bokeh.models import HoverTool,LabelSet
 from bokeh.tile_providers import get_provider, STAMEN_TERRAIN
 import numpy as np
-from bokeh.server.server import Server
-from bokeh.application import Application
-from bokeh.application.handlers.function import FunctionHandler
-from bokeh.plotting import figure
+#from bokeh.server.server import Server
+#from bokeh.application import Application
+#from bokeh.application.handlers.function import FunctionHandler
+#from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, TableColumn, DataTable
-from bokeh.io import show
-from bokeh.io import output_file, show
-from bokeh.plotting import figure
+#from bokeh.io import show
+#from bokeh.io import output_file
+#from bokeh.plotting import figure
 from bokeh.layouts import gridplot
 
-from bokeh.models import HTMLTemplateFormatter
+#from bokeh.models import HTMLTemplateFormatter
 
 
 
 app = Flask(__name__)
+
+# kill port
+# netstat -ano | findstr :8000
+# taskkill /PID 12384 /F
 
 #########
 #AJUSTES#
@@ -114,9 +118,9 @@ def modify_doc(doc):
         
     flask_args = doc.session_context.request.arguments
     # YO Position
-    yo_source = ColumnDataSource({'lat':[],'lon':[],'x':[],'y':[],'usuario':[],'match':[],'distance':[],'url':[]})
+    yo_source = ColumnDataSource({'lat':[],'lon':[],'x':[],'y':[],'usuario':[],'match':[],'distance':[]})
     
-    yo = pd.DataFrame([{'lon': (lon_min+lon_max)/2, 'lat': (lat_min+lat_max)/2,'usuario': 'Yo','match': 0,'distance':0,'url':'https:...'}])  
+    yo = pd.DataFrame([{'lon': (lon_min+lon_max)/2, 'lat': (lat_min+lat_max)/2,'usuario': 'Yo','match': 0,'distance':0}])  
     yo=wgs84_to_web_mercator(yo)
     
     n_rollyo=len(yo.index)
@@ -124,13 +128,11 @@ def modify_doc(doc):
     
     # LOCALES
     # El nombre del local es 'usuario' para que funcione el hover del raton en el mapa. Y el 'match' es la valoracion del local
-    locales_source = ColumnDataSource({
-        'usuario':[],'lat':[],'lon':[],'distance':[],'match':[],'x':[],'y':[],'url':[]})
-    
-    locales = pd.DataFrame(columns=('usuario','lat','lon','distance','match','url'))
+    locales_source = ColumnDataSource({'usuario':[],'lat':[],'lon':[],'distance':[],'match':[],'x':[],'y':[]})
+    locales = pd.DataFrame(columns=('usuario','lat','lon','distance','match'))
 
     for i in range(LOCALES_TOTAL):
-        data = [faker.company(),random.uniform(lat_min, lat_max),random.uniform(lon_min, lon_max),0,str(random.randint(0, 5))+'/5','https:...']
+        data = [faker.company(),random.uniform(lat_min, lat_max),random.uniform(lon_min, lon_max),0,str(random.randint(0, 5))+'/5']
         position_local=(data[1],data[2])
         distance1=int(distance.distance((yo.iat[0,1],yo.iat[0,0]), position_local,).m)
         data[3]=distance1
@@ -142,16 +144,17 @@ def modify_doc(doc):
     
     # Usuarios y amigos
     
-    users_source = ColumnDataSource({'usuario':[],'lat':[],'lon':[],'distance':[],'friends':[],'transport':[],'match':[],'x':[],'y':[],'url':[]})
-
+    users_source = ColumnDataSource({'usuario':[],'lat':[],'lon':[],'distance':[],'friends':[],'transport':[],'match':[],'x':[],'y':[]})
+    amigos_source=ColumnDataSource({'usuario':[],'lat':[],'lon':[],'distance':[],'friends':[],'transport':[],'match':[],'x':[],'y':[]})
+    noamigos_source=ColumnDataSource({'usuario':[],'lat':[],'lon':[],'distance':[],'friends':[],'transport':[],'match':[],'x':[],'y':[]})
     
-    users = pd.DataFrame(columns=('usuario','lat','lon','distance','friends','transport','match','x','y','url'))
+    users = pd.DataFrame(columns=('usuario','lat','lon','distance','friends','transport','match','x','y'))
     
     for i in range(USERS_TOTAL):
         name=faker.first_name()
         last_name=faker.last_name()
         username="@"+name.replace(" ","")+last_name.replace(" ","")
-        data = [username,random.uniform(lat_min, lat_max),random.uniform(lon_min, lon_max),0,0,random.choice(vehicles),str(random.randint(0, 100))+'%',0,0,'https:...']
+        data = [username,random.uniform(lat_min, lat_max),random.uniform(lon_min, lon_max),0,0,random.choice(vehicles),str(random.randint(0, 100))+'%',0,0]
 
         if random.randint(0, 10)<=(10-por/10):
             data[4]=0
@@ -203,9 +206,21 @@ def modify_doc(doc):
                 amigoscerca = pd.concat([amigoscerca, add], ignore_index=True)
         wgs84_to_web_mercator(users)
         
+        # CREATE DATAFRAME WITH ONLY AMIGOS
+        amigos = users.loc[users['friends'] == 1]
+        
+        # CREATE DATAFRAME WITH no AMIGOS
+        noamigos = users.loc[users['friends'] == 0]
+        
         # CONVERT TO BOKEH DATASOURCE AND STREAMING
         n_roll=len(users.index)
         users_source.stream(users.to_dict(orient='list'),n_roll)
+        
+        n_rollamigos=len(amigos.index)
+        amigos_source.stream(amigos.to_dict(orient='list'),n_rollamigos)
+        
+        n_rollnoamigos=len(noamigos.index)
+        noamigos_source.stream(noamigos.to_dict(orient='list'),n_rollnoamigos)
         
         n_rollamigoscerca=len(amigoscerca.index)
         amigoscerca_source.stream(amigoscerca.to_dict(orient='list'),n_rollamigoscerca)
@@ -218,10 +233,11 @@ def modify_doc(doc):
     p=figure(x_range=x_range,y_range=y_range,x_axis_type='mercator',y_axis_type='mercator',sizing_mode='fixed',plot_height=610,plot_width=700)
     tile_prov=get_provider(STAMEN_TERRAIN)
     p.add_tile(tile_prov,level='image')
-    p.image_url(url='url', x='x', y='y',source=users_source,anchor='center',h_units='screen',w_units='screen',w=40,h=40)
-    p.circle('x','y',source=users_source,fill_color='#0057E9',hover_color='white',size=14,fill_alpha=1,line_width=0)
+    p.circle('x','y',source=amigos_source,fill_color='#0057E9',hover_color='white',size=12,fill_alpha=1,line_width=0)
+    p.circle('x','y',source=noamigos_source,fill_color='#4d6b53',hover_color='white',size=10,fill_alpha=1,line_width=0)
     p.circle('x','y',source=yo_source,fill_color='#FF00BD',hover_color='white',size=15,fill_alpha=1,line_width=0)
-    p.square_dot('x','y',source=locales_source,fill_color='#F2CA19',hover_color='white',size=14,fill_alpha=1,line_width=0)
+    p.circle('x','y',source=yo_source,fill_color='#FF00BD',hover_color='white',size=105*radius/500,fill_alpha=0.1,line_width=1)
+    p.square_dot('x','y',source=locales_source,fill_color='#404040',hover_color='white',size=17,fill_alpha=1,line_width=0)
 
     #ADD HOVER TOOL AND LABEL
     my_hover=HoverTool()
@@ -243,7 +259,7 @@ def modify_doc(doc):
     # AMIGOSCERCA TABLE
     columnsamigoscerca = [TableColumn(field='usuario', title='USER')]
     
-    r = DataTable(source=amigoscerca_source, columns=columnsamigoscerca, width=400, height=320)
+    r = DataTable(source=amigoscerca_source, columns=columnsamigoscerca, width=400, height=400)
     
     s = gridplot([[q],[r]],toolbar_options={'logo': None})
     
