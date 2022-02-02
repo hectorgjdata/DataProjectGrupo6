@@ -1,7 +1,0 @@
-docker build --tag meetaverse .   crear imagen (tienes que estar en directorio correcto)
-docker run --detach -p 8000:80 meetaverse (runer contenedor)
-
-
-dockerizar
-
-https://blog.kmmanoj.me/deploying-a-scalable-flask-app-using-gunicorn-and-nginx-in-docker-part-1-3344f13c9649
