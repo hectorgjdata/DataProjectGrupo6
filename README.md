@@ -26,7 +26,8 @@ http://127.0.0.1:8000/
 
 
 
-![interfaz](C:\Diego\interfaz.png)
+
+![interfaz](https://user-images.githubusercontent.com/84716641/152209284-b17dfe93-7e85-4b7a-a242-0bde08644a5e.png)
 
 
 
